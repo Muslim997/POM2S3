@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+/* Ensure form controls use the app foreground color so typed text is visible */
+input,
+textarea,
+select {
+  color: rgb(var(--foreground-rgb));
+}
+
+/* If specific components use Tailwind classes, the component-level change ensures visibility too. */
+
+/* Make placeholders slightly muted but still visible */
+input::placeholder,
+textarea::placeholder {
+  color: rgba(var(--foreground-rgb), 100%);
+}
+
+/* Ensure caret follows the foreground color */
+input,
+textarea,
+select {
+  caret-color: rgb(var(--foreground-rgb));
+}
+
+/* Handle browser autofill (WebKit/Blink) so autofilled text is visible */
+input:-webkit-autofill,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: rgb(var(--foreground-rgb));
+  transition: background-color 5000s ease-in-out 0s;
+}
