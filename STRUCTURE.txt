@@ -1,0 +1,291 @@
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                      CAMPUSMASTER - ARCHITECTURE CLEAN                           ║
+║                   Spring Boot Application Structure                              ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+📁 com.elzocodeur.campusmaster/
+┃
+┣━━ 📦 domain/ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ [COUCHE DOMAINE]
+┃   ┃   ➤ Logique métier pure, indépendante des frameworks
+┃   ┃
+┃   ┣━━ 📂 entity/
+┃   ┃   ┣━━ 📄 BaseEntity.java
+┃   ┃   ┃   ├─ @MappedSuperclass
+┃   ┃   ┃   ├─ @EntityListeners(AuditingEntityListener.class)
+┃   ┃   ┃   └─ Champs : id, createdAt, updatedAt, createdBy, updatedBy, version, deleted
+┃   ┃   ┃
+┃   ┃   └━━ 📄 User.java
+┃   ┃       ├─ @Entity @Table("users")
+┃   ┃       ├─ extends BaseEntity
+┃   ┃       ├─ Propriétés : username, email, password, firstName, lastName, phoneNumber
+┃   ┃       ├─ Enums : role (UserRole), status (UserStatus)
+┃   ┃       └─ Méthodes métier : getFullName(), isActive()
+┃   ┃
+┃   ┣━━ 📂 enums/
+┃   ┃   ┣━━ 📄 UserRole.java
+┃   ┃   ┃   └─ ADMIN, PROFESSOR, STUDENT, STAFF
+┃   ┃   ┃
+┃   ┃   └━━ 📄 UserStatus.java
+┃   ┃       └─ ACTIVE, INACTIVE, SUSPENDED, PENDING
+┃   ┃
+┃   ┣━━ 📂 valueobject/ (à implémenter si nécessaire)
+┃   ┃   └─ Objects immuables sans identité (ex: Address, Money)
+┃   ┃
+┃   └━━ 📂 exception/
+┃       ┣━━ 📄 BusinessException.java (Exception de base)
+┃       ┣━━ 📂 business/
+┃       ┃   ┣━━ 📄 ResourceNotFoundException.java
+┃       ┃   ┣━━ 📄 ResourceAlreadyExistsException.java
+┃       ┃   └━━ 📄 ValidationException.java
+┃       └━━ 📂 technical/
+┃           ┣━━ 📄 DatabaseException.java
+┃           └━━ 📄 ExternalServiceException.java
+┃
+┃
+┣━━ 📦 application/ ━━━━━━━━━━━━━━━━━━━━━━━━━━ [COUCHE APPLICATION]
+┃   ┃   ➤ Cas d'utilisation, orchestration, transformation de données
+┃   ┃
+┃   ┣━━ 📂 dto/
+┃   ┃   ┣━━ 📂 request/
+┃   ┃   ┃   ┣━━ 📄 CreateUserRequest.java
+┃   ┃   ┃   ┃   └─ Validations : @NotBlank, @Email, @Size, @NotNull
+┃   ┃   ┃   └━━ 📄 UpdateUserRequest.java
+┃   ┃   ┃       └─ Validations optionnelles pour mise à jour
+┃   ┃   ┃
+┃   ┃   └━━ 📂 response/
+┃   ┃       ┣━━ 📄 UserResponse.java
+┃   ┃       ┃   └─ DTO de réponse pour User
+┃   ┃       ┣━━ 📄 ApiResponse<T>.java
+┃   ┃       ┃   └─ Wrapper standardisé : timestamp, success, message, data
+┃   ┃       ┣━━ 📄 ErrorResponse.java
+┃   ┃       ┃   └─ Réponse d'erreur : timestamp, status, error, message, errorCode, path
+┃   ┃       └━━ 📄 PageResponse<T>.java
+┃   ┃           └─ Pagination : content, pageNumber, pageSize, totalElements, totalPages
+┃   ┃
+┃   ┣━━ 📂 mapper/
+┃   ┃   └━━ 📄 UserMapper.java
+┃   ┃       ├─ toEntity(CreateUserRequest) → User
+┃   ┃       ├─ updateEntity(User, UpdateUserRequest)
+┃   ┃       ├─ toResponse(User) → UserResponse
+┃   ┃       └─ toResponseList(List<User>) → List<UserResponse>
+┃   ┃
+┃   ┣━━ 📂 modelà/
+┃   ┃   └━━ 📄 UserService.java (Interface)
+┃   ┃       ├─ createUser(CreateUserRequest) → UserResponse
+┃   ┃       ├─ getUserById(Long) → UserResponse
+┃   ┃       ├─ updateUser(Long, UpdateUserRequest) → UserResponse
+┃   ┃       ├─ deleteUser(Long)
+┃   ┃       ├─ getAllUsers(...) → PageResponse<UserResponse>
+┃   ┃       ├─ searchUsers(...) → PageResponse<UserResponse>
+┃   ┃       └─ activateUser(Long), deactivateUser(Long), suspendUser(Long)
+┃   ┃
+┃   └━━ 📂 validator/
+┃       └━━ 📄 UserValidator.java
+┃           ├─ validateCreateUser(CreateUserRequest)
+┃           ├─ validateUserId(Long)
+┃           └─ Validations métier complexes
+┃
+┃
+┣━━ 📦 infrastructure/ ━━━━━━━━━━━━━━━━━━━━━━ [COUCHE INFRASTRUCTURE]
+┃   ┃   ➤ Détails techniques, accès aux données, configuration
+┃   ┃
+┃   ┣━━ 📂 persistence/
+┃   ┃   ┣━━ 📂 repository/
+┃   ┃   ┃   └━━ 📄 UserRepository.java
+┃   ┃   ┃       ├─ extends JpaRepository<User, Long>
+┃   ┃   ┃       ├─ extends JpaSpecificationExecutor<User>
+┃   ┃   ┃       ├─ Méthodes dérivées : findByEmail, findByUsername, existsByEmail
+┃   ┃   ┃       └─ Queries JPQL : findAllActive, searchUsers, countByRole
+┃   ┃   ┃
+┃   ┃   └━━ 📂 specification/ (pour requêtes dynamiques complexes)
+┃   ┃       └─ Spécifications JPA pour filtrage avancé
+┃   ┃
+┃   ┣━━ 📂 config/
+┃   ┃   ┣━━ 📂 database/
+┃   ┃   ┃   └━━ 📄 JpaConfig.java
+┃   ┃   ┃       ├─ @EnableJpaAuditing
+┃   ┃   ┃       ├─ @EnableJpaRepositories
+┃   ┃   ┃       └─ @EnableTransactionManagement
+┃   ┃   ┃
+┃   ┃   ┣━━ 📂 security/ (à implémenter)
+┃   ┃   ┃   └─ Configuration Spring Security + JWT
+┃   ┃   ┃
+┃   ┃   ┣━━ 📂 swagger/
+┃   ┃   ┃   └━━ 📄 OpenApiConfig.java
+┃   ┃   ┃       └─ Configuration Swagger/OpenAPI
+┃   ┃   ┃
+┃   ┃   └━━ 📂 web/
+┃   ┃       └━━ 📄 CorsConfig.java
+┃   ┃           └─ Configuration CORS
+┃   ┃
+┃   ┣━━ 📂 external/ (pour services externes)
+┃   ┃   └─ Clients REST, APIs tierces
+┃   ┃
+┃   └━━ 📂 messaging/ (optionnel)
+┃       └─ Configuration RabbitMQ, Kafka, etc.
+┃
+┃
+┣━━ 📦 service/ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ [IMPLÉMENTATIONS DES SERVICES]
+┃   ┃   ➤ Implémentation de la logique applicative
+┃   ┃
+┃   └━━ 📂 impl/
+┃       └━━ 📄 UserServiceImpl.java
+┃           ├─ @Service @RequiredArgsConstructor
+┃           ├─ @Transactional(readOnly = true)
+┃           ├─ implements UserService
+┃           ├─ Dépendances : UserRepository, UserMapper, UserValidator
+┃           └─ Implémentations de tous les cas d'utilisation
+┃
+┃
+┣━━ 📦 web/ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ [COUCHE PRÉSENTATION]
+┃   ┃   ➤ Controllers REST, gestion des requêtes HTTP
+┃   ┃
+┃   ┣━━ 📂 controller/
+┃   ┃   └━━ 📄 UserController.java
+┃   ┃       ├─ @RestController @RequestMapping("/api/v1/users")
+┃   ┃       ├─ Endpoints REST complets (CRUD + search)
+┃   ┃       ├─ Validation : @Valid
+┃   ┃       └─ Réponses : ResponseEntity<ApiResponse<T>>
+┃   ┃
+┃   ┣━━ 📂 advice/
+┃   ┃   └━━ 📄 GlobalExceptionHandler.java
+┃   ┃       ├─ @RestControllerAdvice
+┃   ┃       ├─ @ExceptionHandler pour chaque type d'exception
+┃   ┃       └─ Transformation en ErrorResponse standardisé
+┃   ┃
+┃   └━━ 📂 filter/ (pour filtres HTTP personnalisés)
+┃       └─ Filtres HTTP, intercepteurs
+┃
+┃
+┣━━ 📦 security/ ━━━━━━━━━━━━━━━━━━━━━━━━━━━ [SÉCURITÉ] (à implémenter)
+┃   ┃   ➤ Authentification, autorisation, JWT
+┃   ┃
+┃   ┣━━ 📂 jwt/
+┃   ┃   ├─ JwtTokenProvider.java
+┃   ┃   └─ JwtAuthenticationFilter.java
+┃   ┃
+┃   ┣━━ 📂 userdetails/
+┃   ┃   └─ CustomUserDetailsService.java
+┃   ┃
+┃   └━━ 📂 audit/
+┃       └─ AuditorAwareImpl.java
+┃
+┃
+└━━ 📦 shared/ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ [COMPOSANTS PARTAGÉS]
+    ┃   ➤ Utilitaires, constantes, aspects
+    ┃
+    ┣━━ 📂 constant/
+    ┃   ┣━━ 📄 AppConstants.java
+    ┃   ┃   ├─ API : Chemins API, versions
+    ┃   ┃   ├─ Security : Tokens, headers
+    ┃   ┃   ├─ Pagination : Tailles par défaut
+    ┃   ┃   └─ Validation : Regex, longueurs
+    ┃   ┃
+    ┃   └━━ 📄 ErrorMessages.java
+    ┃       └─ Messages d'erreur standardisés
+    ┃
+    ┣━━ 📂 util/
+    ┃   ┣━━ 📄 DateUtils.java
+    ┃   ┃   └─ Utilitaires de manipulation de dates
+    ┃   └━━ 📄 StringUtils.java
+    ┃       └─ Utilitaires de manipulation de chaînes
+    ┃
+    └━━ 📂 aspect/ (à implémenter)
+        ├─ LoggingAspect.java (logs automatiques)
+        └─ PerformanceAspect.java (monitoring performance)
+
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                         FLUX DE DONNÉES (EXEMPLE)                                ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+   Client (HTTP POST /api/v1/users)
+      ↓
+   ┌─────────────────────────────────────────┐
+   │  UserController.createUser()            │  ← WEB LAYER
+   │  - Reçoit CreateUserRequest             │
+   │  - Valide avec @Valid                   │
+   └─────────────────────────────────────────┘
+      ↓
+   ┌─────────────────────────────────────────┐
+   │  UserServiceImpl.createUser()           │  ← SERVICE LAYER
+   │  - Orchestration                        │
+   └─────────────────────────────────────────┘
+      ↓
+   ┌─────────────────────────────────────────┐
+   │  UserValidator.validateCreateUser()     │  ← APPLICATION LAYER
+   │  - Validation métier                    │
+   └─────────────────────────────────────────┘
+      ↓
+   ┌─────────────────────────────────────────┐
+   │  UserMapper.toEntity()                  │  ← APPLICATION LAYER
+   │  - CreateUserRequest → User             │
+   └─────────────────────────────────────────┘
+      ↓
+   ┌─────────────────────────────────────────┐
+   │  UserRepository.save()                  │  ← INFRASTRUCTURE LAYER
+   │  - Persistence JPA                      │
+   └─────────────────────────────────────────┘
+      ↓
+   ┌─────────────────────────────────────────┐
+   │  PostgreSQL Database                    │  ← DATABASE
+   └─────────────────────────────────────────┘
+      ↓
+   ┌─────────────────────────────────────────┐
+   │  UserMapper.toResponse()                │  ← APPLICATION LAYER
+   │  - User → UserResponse                  │
+   └─────────────────────────────────────────┘
+      ↓
+   ┌─────────────────────────────────────────┐
+   │  ApiResponse.success()                  │  ← WEB LAYER
+   │  - Wrapper la réponse                   │
+   └─────────────────────────────────────────┘
+      ↓
+   Client (Reçoit JSON UserResponse)
+
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                         PRINCIPES ARCHITECTURAUX                                 ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+✓ CLEAN ARCHITECTURE
+  ├─ Séparation en couches indépendantes
+  ├─ Dépendances vers l'intérieur (Domain ← Application ← Infrastructure)
+  └─ Indépendance des frameworks
+
+✓ SOLID
+  ├─ Single Responsibility : Une classe = une responsabilité
+  ├─ Open/Closed : Ouvert à l'extension, fermé à la modification
+  ├─ Liskov Substitution : Substitution par les sous-types
+  ├─ Interface Segregation : Interfaces spécifiques
+  └─ Dependency Inversion : Dépendre des abstractions
+
+✓ DDD (Domain-Driven Design)
+  ├─ Entités avec identité
+  ├─ Value Objects immuables
+  ├─ Repositories pour l'accès aux données
+  └─ Ubiquitous Language (langage métier)
+
+✓ PATTERNS
+  ├─ Repository Pattern
+  ├─ Service Layer Pattern
+  ├─ DTO Pattern
+  ├─ Mapper Pattern
+  └─ Builder Pattern
+
+
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                         BONNES PRATIQUES APPLIQUÉES                              ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+✓ Gestion des erreurs centralisée (GlobalExceptionHandler)
+✓ Réponses API standardisées (ApiResponse, ErrorResponse)
+✓ Validation à plusieurs niveaux (annotations + validators)
+✓ Audit automatique (BaseEntity avec @CreatedDate, @UpdatedDate)
+✓ Soft Delete (flag deleted au lieu de suppression physique)
+✓ Pagination systématique (PageResponse)
+✓ Logging structuré (SLF4J + Logback)
+✓ Configuration par profils (dev, test, prod)
+✓ Documentation API automatique (Swagger/OpenAPI)
+✓ Transaction management (@Transactional)
+✓ Sécurité (validation, CORS, JWT à venir)
