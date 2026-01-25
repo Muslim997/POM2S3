@@ -3,13 +3,17 @@ package com.elzocodeur.campusmaster.application.service;
 import com.elzocodeur.campusmaster.application.dto.user.CreateUserRequest;
 import com.elzocodeur.campusmaster.application.dto.user.UpdateUserRequest;
 import com.elzocodeur.campusmaster.application.dto.user.UserDto;
+import com.elzocodeur.campusmaster.domain.entity.Departement;
+import com.elzocodeur.campusmaster.domain.entity.Etudiant;
+import com.elzocodeur.campusmaster.domain.entity.Tuteur;
 import com.elzocodeur.campusmaster.domain.entity.User;
 import com.elzocodeur.campusmaster.domain.enums.UserRole;
 import com.elzocodeur.campusmaster.domain.enums.UserStatus;
+import com.elzocodeur.campusmaster.infrastructure.persistence.repository.DepartementRepository;
+import com.elzocodeur.campusmaster.infrastructure.persistence.repository.EtudiantRepository;
+import com.elzocodeur.campusmaster.infrastructure.persistence.repository.TuteurRepository;
 import com.elzocodeur.campusmaster.infrastructure.persistence.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,16 +30,14 @@ public class UserManagementService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EtudiantRepository etudiantRepository;
+    private final TuteurRepository tuteurRepository;
+    private final DepartementRepository departementRepository;
 
     public List<UserDto> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
-    }
-
-    public Page<UserDto> getAllUsersPaged(Pageable pageable) {
-        return userRepository.findAllActive(pageable)
-                .map(this::toDto);
     }
 
     public UserDto getUserById(Long id) {
@@ -44,19 +46,28 @@ public class UserManagementService {
         return toDto(user);
     }
 
-    public Page<UserDto> searchUsers(String keyword, Pageable pageable) {
-        return userRepository.searchUsers(keyword, pageable)
-                .map(this::toDto);
+    public List<UserDto> searchUsers(String keyword) {
+        return userRepository.findAll().stream()
+                .filter(user -> user.getUsername().toLowerCase().contains(keyword.toLowerCase()) ||
+                        user.getEmail().toLowerCase().contains(keyword.toLowerCase()) ||
+                        (user.getFirstName() != null && user.getFirstName().toLowerCase().contains(keyword.toLowerCase())) ||
+                        (user.getLastName() != null && user.getLastName().toLowerCase().contains(keyword.toLowerCase())))
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
-    public Page<UserDto> getUsersByRole(UserRole role, Pageable pageable) {
-        return userRepository.findByRole(role, pageable)
-                .map(this::toDto);
+    public List<UserDto> getUsersByRole(UserRole role) {
+        return userRepository.findAll().stream()
+                .filter(user -> user.getRole() == role)
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
-    public Page<UserDto> getUsersByStatus(UserStatus status, Pageable pageable) {
-        return userRepository.findByStatus(status, pageable)
-                .map(this::toDto);
+    public List<UserDto> getUsersByStatus(UserStatus status) {
+        return userRepository.findAll().stream()
+                .filter(user -> user.getStatus() == status)
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional
@@ -69,6 +80,9 @@ public class UserManagementService {
             throw new RuntimeException("Ce nom d'utilisateur est déjà utilisé");
         }
 
+        // Convertir le rôle
+        UserRole userRole = convertToUserRole(request.getRole());
+
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
@@ -76,11 +90,49 @@ public class UserManagementService {
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .phoneNumber(request.getPhoneNumber())
-                .status(UserStatus.PENDING)
-                .role(UserRole.STUDENT)
+                .status(UserStatus.ACTIVE)
+                .role(userRole)
                 .build();
 
         user = userRepository.save(user);
+
+        // Créer automatiquement l'entité Etudiant si le rôle est STUDENT
+        if (userRole == UserRole.STUDENT) {
+            String numeroEtudiant = request.getNumeroEtudiant();
+            if (numeroEtudiant == null || numeroEtudiant.isBlank()) {
+                numeroEtudiant = "ETU" + System.currentTimeMillis();
+            }
+
+            Etudiant etudiant = Etudiant.builder()
+                    .numeroEtudiant(numeroEtudiant)
+                    .user(user)
+                    .build();
+
+            if (request.getDepartementId() != null) {
+                Departement departement = departementRepository.findById(request.getDepartementId())
+                        .orElseThrow(() -> new RuntimeException("Département non trouvé"));
+                etudiant.setDepartement(departement);
+            }
+
+            etudiantRepository.save(etudiant);
+        }
+
+        // Créer automatiquement l'entité Tuteur si le rôle est PROFESSOR
+        if (userRole == UserRole.PROFESSOR) {
+            Tuteur tuteur = Tuteur.builder()
+                    .specialisation(request.getSpecialisation())
+                    .user(user)
+                    .build();
+
+            if (request.getDepartementId() != null) {
+                Departement departement = departementRepository.findById(request.getDepartementId())
+                        .orElseThrow(() -> new RuntimeException("Département non trouvé"));
+                tuteur.setDepartement(departement);
+            }
+
+            tuteurRepository.save(tuteur);
+        }
+
         return toDto(user);
     }
 
@@ -145,9 +197,48 @@ public class UserManagementService {
     public UserDto changeUserRole(Long id, UserRole newRole) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        UserRole oldRole = user.getRole();
         user.setRole(newRole);
         user = userRepository.save(user);
+
+        // Si le nouveau rôle est STUDENT et qu'il n'a pas d'entrée Etudiant, on la crée
+        if (newRole == UserRole.STUDENT && etudiantRepository.findByUserId(id).isEmpty()) {
+            Etudiant etudiant = Etudiant.builder()
+                    .numeroEtudiant("ETU" + System.currentTimeMillis())
+                    .user(user)
+                    .build();
+            etudiantRepository.save(etudiant);
+        }
+
+        // Si le nouveau rôle est PROFESSOR et qu'il n'a pas d'entrée Tuteur, on la crée
+        if (newRole == UserRole.PROFESSOR && tuteurRepository.findByUserId(id).isEmpty()) {
+            Tuteur tuteur = Tuteur.builder()
+                    .user(user)
+                    .build();
+            tuteurRepository.save(tuteur);
+        }
+
         return toDto(user);
+    }
+
+    /**
+     * Convertit le rôle envoyé par le client vers les valeurs valides de l'enum UserRole.
+     */
+    private UserRole convertToUserRole(String role) {
+        if (role == null || role.isBlank()) {
+            throw new RuntimeException("Le rôle est obligatoire");
+        }
+
+        String normalizedRole = role.toUpperCase().trim();
+
+        return switch (normalizedRole) {
+            case "STUDENT", "ETUDIANT" -> UserRole.STUDENT;
+            case "PROFESSOR", "ENSEIGNANT", "TEACHER" -> UserRole.PROFESSOR;
+            case "ADMIN", "ADMINISTRATOR" -> UserRole.ADMIN;
+            case "STAFF" -> UserRole.STAFF;
+            default -> throw new RuntimeException("Rôle invalide: " + role + ". Valeurs acceptées: STUDENT, PROFESSOR, ADMIN, STAFF");
+        };
     }
 
     private UserDto toDto(User user) {

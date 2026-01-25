@@ -20,7 +20,8 @@ public class AnnonceDto {
     private Annonce.Priorite priorite;
     private Long coursId;
     private String coursNom;
-    private Long tuteurId;
+    private Long tuteurId;          // ID dans la table tuteurs
+    private Long tuteurUserId;      // ID de l'utilisateur (table users)
     private String tuteurNom;
     private LocalDateTime createdAt;
 }

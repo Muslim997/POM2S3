@@ -42,6 +42,17 @@ public class CoursService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Récupère les cours par userId du tuteur (plus pratique pour le frontend)
+     */
+    public List<CoursDto> getCoursByTuteurUserId(Long userId) {
+        Tuteur tuteur = tuteurRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Tuteur non trouvé pour cet utilisateur"));
+        return coursRepository.findByTuteurId(tuteur.getId()).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
     public List<CoursDto> getCoursByDepartement(Long departementId) {
         return coursRepository.findByDepartementId(departementId).stream()
                 .map(this::toDto)
@@ -50,8 +61,17 @@ public class CoursService {
 
     @Transactional
     public CoursDto createCours(CreateCoursRequest request) {
-        Tuteur tuteur = tuteurRepository.findById(request.getTuteurId())
-                .orElseThrow(() -> new RuntimeException("Tuteur non trouvé"));
+        // Supporter soit tuteurUserId (recommandé) soit tuteurId
+        Tuteur tuteur;
+        if (request.getTuteurUserId() != null) {
+            tuteur = tuteurRepository.findByUserId(request.getTuteurUserId())
+                    .orElseThrow(() -> new RuntimeException("Tuteur non trouvé pour cet utilisateur"));
+        } else if (request.getTuteurId() != null) {
+            tuteur = tuteurRepository.findById(request.getTuteurId())
+                    .orElseThrow(() -> new RuntimeException("Tuteur non trouvé"));
+        } else {
+            throw new RuntimeException("tuteurId ou tuteurUserId est obligatoire");
+        }
 
         Cours cours = Cours.builder()
                 .titre(request.getTitre())
@@ -79,7 +99,12 @@ public class CoursService {
         cours.setDescription(request.getDescription());
         cours.setSemestre(request.getSemestre());
 
-        if (request.getTuteurId() != null) {
+        // Supporter soit tuteurUserId (recommandé) soit tuteurId pour la mise à jour
+        if (request.getTuteurUserId() != null) {
+            Tuteur tuteur = tuteurRepository.findByUserId(request.getTuteurUserId())
+                    .orElseThrow(() -> new RuntimeException("Tuteur non trouvé pour cet utilisateur"));
+            cours.setTuteur(tuteur);
+        } else if (request.getTuteurId() != null) {
             Tuteur tuteur = tuteurRepository.findById(request.getTuteurId())
                     .orElseThrow(() -> new RuntimeException("Tuteur non trouvé"));
             cours.setTuteur(tuteur);
@@ -109,6 +134,8 @@ public class CoursService {
                 .description(cours.getDescription())
                 .semestre(cours.getSemestre())
                 .tuteurId(cours.getTuteur() != null ? cours.getTuteur().getId() : null)
+                .tuteurUserId(cours.getTuteur() != null && cours.getTuteur().getUser() != null ?
+                        cours.getTuteur().getUser().getId() : null)
                 .tuteurNom(cours.getTuteur() != null && cours.getTuteur().getUser() != null ?
                         cours.getTuteur().getUser().getFirstName() + " " + cours.getTuteur().getUser().getLastName() : null)
                 .departementId(cours.getDepartement() != null ? cours.getDepartement().getId() : null)

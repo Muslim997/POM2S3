@@ -6,6 +6,7 @@ import com.elzocodeur.campusmaster.application.dto.departement.CreateDepartement
 import com.elzocodeur.campusmaster.application.dto.departement.DepartementDto;
 import com.elzocodeur.campusmaster.application.dto.departement.UpdateDepartementRequest;
 import com.elzocodeur.campusmaster.application.dto.devoir.DevoirDto;
+import com.elzocodeur.campusmaster.application.dto.etudiant.CreateEtudiantRequest;
 import com.elzocodeur.campusmaster.application.dto.etudiant.EtudiantDto;
 import com.elzocodeur.campusmaster.application.dto.matiere.CreateMatiereRequest;
 import com.elzocodeur.campusmaster.application.dto.matiere.MatiereDto;
@@ -17,6 +18,8 @@ import com.elzocodeur.campusmaster.application.dto.semestre.CreateSemestreReques
 import com.elzocodeur.campusmaster.application.dto.semestre.SemestreDto;
 import com.elzocodeur.campusmaster.application.dto.stats.StatistiquesAvanceesDto;
 import com.elzocodeur.campusmaster.application.dto.support.SupportDto;
+import com.elzocodeur.campusmaster.application.dto.tuteur.CreateTuteurRequest;
+import com.elzocodeur.campusmaster.application.dto.tuteur.TuteurDto;
 import com.elzocodeur.campusmaster.application.dto.user.CreateUserRequest;
 import com.elzocodeur.campusmaster.application.dto.user.UpdateUserRequest;
 import com.elzocodeur.campusmaster.application.dto.user.UserDto;
@@ -28,8 +31,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -53,13 +54,14 @@ public class AdminController {
     private final DepartementService departementService;
     private final ModerationService moderationService;
     private final StatistiquesAvanceesService statistiquesAvanceesService;
+    private final TuteurService tuteurService;
 
     // ============ GESTION DES UTILISATEURS ============
 
     @GetMapping("/users")
-    @Operation(summary = "Liste de tous les utilisateurs (paginée)")
-    public ResponseEntity<Page<UserDto>> getAllUsers(Pageable pageable) {
-        return ResponseEntity.ok(userManagementService.getAllUsersPaged(pageable));
+    @Operation(summary = "Liste de tous les utilisateurs")
+    public ResponseEntity<List<UserDto>> getAllUsers() {
+        return ResponseEntity.ok(userManagementService.getAllUsers());
     }
 
     @GetMapping("/users/{id}")
@@ -70,26 +72,20 @@ public class AdminController {
 
     @GetMapping("/users/search")
     @Operation(summary = "Rechercher des utilisateurs")
-    public ResponseEntity<Page<UserDto>> searchUsers(
-            @RequestParam String keyword,
-            Pageable pageable) {
-        return ResponseEntity.ok(userManagementService.searchUsers(keyword, pageable));
+    public ResponseEntity<List<UserDto>> searchUsers(@RequestParam String keyword) {
+        return ResponseEntity.ok(userManagementService.searchUsers(keyword));
     }
 
     @GetMapping("/users/role/{role}")
     @Operation(summary = "Utilisateurs par rôle")
-    public ResponseEntity<Page<UserDto>> getUsersByRole(
-            @PathVariable UserRole role,
-            Pageable pageable) {
-        return ResponseEntity.ok(userManagementService.getUsersByRole(role, pageable));
+    public ResponseEntity<List<UserDto>> getUsersByRole(@PathVariable UserRole role) {
+        return ResponseEntity.ok(userManagementService.getUsersByRole(role));
     }
 
     @GetMapping("/users/status/{status}")
     @Operation(summary = "Utilisateurs par statut")
-    public ResponseEntity<Page<UserDto>> getUsersByStatus(
-            @PathVariable UserStatus status,
-            Pageable pageable) {
-        return ResponseEntity.ok(userManagementService.getUsersByStatus(status, pageable));
+    public ResponseEntity<List<UserDto>> getUsersByStatus(@PathVariable UserStatus status) {
+        return ResponseEntity.ok(userManagementService.getUsersByStatus(status));
     }
 
     @PostMapping("/users")
@@ -236,12 +232,6 @@ public class AdminController {
     @Operation(summary = "Liste de tous les départements")
     public ResponseEntity<List<DepartementDto>> getAllDepartements() {
         return ResponseEntity.ok(departementService.getAllDepartements());
-    }
-
-    @GetMapping("/departements/paged")
-    @Operation(summary = "Liste paginée des départements")
-    public ResponseEntity<Page<DepartementDto>> getAllDepartementsPaged(Pageable pageable) {
-        return ResponseEntity.ok(departementService.getAllDepartementsPaged(pageable));
     }
 
     @GetMapping("/departements/{id}")
@@ -491,5 +481,61 @@ public class AdminController {
     @Operation(summary = "Suspendre un étudiant")
     public ResponseEntity<EtudiantDto> suspendreEtudiant(@PathVariable Long id) {
         return ResponseEntity.ok(etudiantService.suspendreEtudiant(id));
+    }
+
+    @GetMapping("/etudiants/user/{userId}")
+    @Operation(summary = "Récupérer un étudiant par son userId")
+    public ResponseEntity<EtudiantDto> getEtudiantByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(etudiantService.getEtudiantByUserId(userId));
+    }
+
+    @PutMapping("/etudiants/{id}")
+    @Operation(summary = "Modifier un étudiant")
+    public ResponseEntity<EtudiantDto> updateEtudiant(
+            @PathVariable Long id,
+            @Valid @RequestBody CreateEtudiantRequest request) {
+        return ResponseEntity.ok(etudiantService.updateEtudiant(id, request));
+    }
+
+    @DeleteMapping("/etudiants/{id}")
+    @Operation(summary = "Supprimer un étudiant")
+    public ResponseEntity<Void> deleteEtudiant(@PathVariable Long id) {
+        etudiantService.deleteEtudiant(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ============ GESTION DES TUTEURS (ENSEIGNANTS) ============
+
+    @GetMapping("/tuteurs")
+    @Operation(summary = "Liste de tous les tuteurs")
+    public ResponseEntity<List<TuteurDto>> getAllTuteurs() {
+        return ResponseEntity.ok(tuteurService.getAllTuteurs());
+    }
+
+    @GetMapping("/tuteurs/{id}")
+    @Operation(summary = "Détails d'un tuteur")
+    public ResponseEntity<TuteurDto> getTuteurById(@PathVariable Long id) {
+        return ResponseEntity.ok(tuteurService.getTuteurById(id));
+    }
+
+    @GetMapping("/tuteurs/user/{userId}")
+    @Operation(summary = "Récupérer un tuteur par son userId")
+    public ResponseEntity<TuteurDto> getTuteurByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(tuteurService.getTuteurByUserId(userId));
+    }
+
+    @PutMapping("/tuteurs/{id}")
+    @Operation(summary = "Modifier un tuteur")
+    public ResponseEntity<TuteurDto> updateTuteur(
+            @PathVariable Long id,
+            @Valid @RequestBody CreateTuteurRequest request) {
+        return ResponseEntity.ok(tuteurService.updateTuteur(id, request));
+    }
+
+    @DeleteMapping("/tuteurs/{id}")
+    @Operation(summary = "Supprimer un tuteur")
+    public ResponseEntity<Void> deleteTuteur(@PathVariable Long id) {
+        tuteurService.deleteTuteur(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -3,6 +3,7 @@ package com.elzocodeur.campusmaster.application.service;
 import com.elzocodeur.campusmaster.application.dto.stats.CoursStatsDto;
 import com.elzocodeur.campusmaster.domain.entity.Cours;
 import com.elzocodeur.campusmaster.domain.entity.Submit;
+import com.elzocodeur.campusmaster.domain.entity.Tuteur;
 import com.elzocodeur.campusmaster.infrastructure.persistence.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ public class StatsService {
     private final SupportRepository supportRepository;
     private final DevoirRepository devoirRepository;
     private final SubmitRepository submitRepository;
+    private final TuteurRepository tuteurRepository;
 
     public CoursStatsDto getCoursStats(Long coursId) {
         Cours cours = coursRepository.findById(coursId)
@@ -64,6 +66,17 @@ public class StatsService {
 
     public List<CoursStatsDto> getCoursStatsByTuteur(Long tuteurId) {
         return coursRepository.findByTuteurId(tuteurId).stream()
+                .map(cours -> getCoursStats(cours.getId()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Récupère les statistiques des cours par userId du tuteur (plus pratique pour le frontend)
+     */
+    public List<CoursStatsDto> getCoursStatsByTuteurUserId(Long userId) {
+        Tuteur tuteur = tuteurRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Tuteur non trouvé pour cet utilisateur"));
+        return coursRepository.findByTuteurId(tuteur.getId()).stream()
                 .map(cours -> getCoursStats(cours.getId()))
                 .collect(Collectors.toList());
     }

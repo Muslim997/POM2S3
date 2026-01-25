@@ -18,6 +18,10 @@ public class DevoirDto {
     private LocalDateTime dateLimite;
     private Long coursId;
     private String coursNom;
+    private String coursSemestre;
+    private Long tuteurId;          // ID dans la table tuteurs
+    private Long tuteurUserId;      // ID de l'utilisateur tuteur (table users)
+    private String tuteurNom;
     private Integer nombreSubmissions;
     private Boolean isSubmitted;
     private LocalDateTime createdAt;

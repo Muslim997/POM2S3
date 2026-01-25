@@ -37,4 +37,17 @@ public class CreateUserRequest {
     private String phoneNumber;
 
     private Set<Long> roleIds;
+
+    // Rôle de l'utilisateur (ADMIN, PROFESSOR, STUDENT, STAFF)
+    @NotBlank(message = "Le rôle est obligatoire")
+    private String role;
+
+    // Champs spécifiques pour STUDENT
+    private String numeroEtudiant;
+
+    // Champs spécifiques pour PROFESSOR
+    private String specialisation;
+
+    // Département (pour STUDENT et PROFESSOR)
+    private Long departementId;
 }

@@ -16,7 +16,8 @@ public class CoursDto {
     private String titre;
     private String description;
     private String semestre;
-    private Long tuteurId;
+    private Long tuteurId;        // ID dans la table tuteurs
+    private Long tuteurUserId;    // ID de l'utilisateur (table users)
     private String tuteurNom;
     private Long departementId;
     private String departementNom;

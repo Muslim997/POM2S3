@@ -8,8 +8,6 @@ import com.elzocodeur.campusmaster.domain.exception.business.ResourceNotFoundExc
 import com.elzocodeur.campusmaster.infrastructure.persistence.repository.DepartementRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,12 +27,6 @@ public class DepartementService {
         return departementRepository.findAll().stream()
                 .map(this::toDepartementDto)
                 .collect(Collectors.toList());
-    }
-
-    public Page<DepartementDto> getAllDepartementsPaged(Pageable pageable) {
-        log.info("Récupération des départements paginés");
-        return departementRepository.findAll(pageable)
-                .map(this::toDepartementDto);
     }
 
     public DepartementDto getDepartementById(Long id) {

@@ -1,6 +1,5 @@
 package com.elzocodeur.campusmaster.application.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,16 +15,11 @@ import java.util.Map;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
-
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    @Builder.Default
-    private LocalDateTime timestamp = LocalDateTime.now();
-
+    private LocalDateTime timestamp;
     private int status;
     private String error;
     private String message;
     private String errorCode;
     private String path;
     private Map<String, String> validationErrors;
-    private String debugMessage;
 }

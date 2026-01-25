@@ -50,6 +50,17 @@ public class AnnonceService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Récupère les annonces par userId du tuteur (plus pratique pour le frontend)
+     */
+    public List<AnnonceDto> getAnnoncesByTuteurUserId(Long userId) {
+        Tuteur tuteur = tuteurRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Tuteur non trouvé pour cet utilisateur"));
+        return annonceRepository.findByTuteurIdOrderByDatePublicationDesc(tuteur.getId()).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
     public List<AnnonceDto> getAnnoncesGenerales() {
         return annonceRepository.findByCoursIsNullOrderByDatePublicationDesc().stream()
                 .map(this::toDto)
@@ -64,8 +75,17 @@ public class AnnonceService {
 
     @Transactional
     public AnnonceDto createAnnonce(CreateAnnonceRequest request) {
-        Tuteur tuteur = tuteurRepository.findById(request.getTuteurId())
-                .orElseThrow(() -> new RuntimeException("Tuteur non trouvé"));
+        // Supporter soit tuteurUserId (recommandé) soit tuteurId
+        Tuteur tuteur;
+        if (request.getTuteurUserId() != null) {
+            tuteur = tuteurRepository.findByUserId(request.getTuteurUserId())
+                    .orElseThrow(() -> new RuntimeException("Tuteur non trouvé pour cet utilisateur"));
+        } else if (request.getTuteurId() != null) {
+            tuteur = tuteurRepository.findById(request.getTuteurId())
+                    .orElseThrow(() -> new RuntimeException("Tuteur non trouvé"));
+        } else {
+            throw new RuntimeException("tuteurId ou tuteurUserId est obligatoire");
+        }
 
         Annonce annonce = Annonce.builder()
                 .titre(request.getTitre())
@@ -128,6 +148,8 @@ public class AnnonceService {
                 .coursId(annonce.getCours() != null ? annonce.getCours().getId() : null)
                 .coursNom(annonce.getCours() != null ? annonce.getCours().getTitre() : null)
                 .tuteurId(annonce.getTuteur() != null ? annonce.getTuteur().getId() : null)
+                .tuteurUserId(annonce.getTuteur() != null && annonce.getTuteur().getUser() != null ?
+                        annonce.getTuteur().getUser().getId() : null)
                 .tuteurNom(annonce.getTuteur() != null && annonce.getTuteur().getUser() != null ?
                         annonce.getTuteur().getUser().getFirstName() + " " + annonce.getTuteur().getUser().getLastName() : null)
                 .createdAt(annonce.getCreatedAt())

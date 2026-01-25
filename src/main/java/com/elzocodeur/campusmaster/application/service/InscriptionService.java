@@ -36,6 +36,17 @@ public class InscriptionService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Récupère les inscriptions par userId de l'étudiant (plus pratique pour le frontend)
+     */
+    public List<InscriptionDto> getInscriptionsByEtudiantUserId(Long userId) {
+        Etudiant etudiant = etudiantRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Étudiant non trouvé pour cet utilisateur"));
+        return inscriptionRepository.findByEtudiantId(etudiant.getId()).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
     public List<InscriptionDto> getInscriptionsByCours(Long coursId) {
         return inscriptionRepository.findByCoursId(coursId).stream()
                 .map(this::toDto)
@@ -46,6 +57,27 @@ public class InscriptionService {
     public InscriptionDto inscrireEtudiant(Long etudiantId, Long coursId) {
         Etudiant etudiant = etudiantRepository.findById(etudiantId)
                 .orElseThrow(() -> new RuntimeException("Étudiant non trouvé"));
+
+        Cours cours = coursRepository.findById(coursId)
+                .orElseThrow(() -> new RuntimeException("Cours non trouvé"));
+
+        Inscription inscription = Inscription.builder()
+                .dateInscription(LocalDate.now())
+                .etudiant(etudiant)
+                .cours(cours)
+                .build();
+
+        inscription = inscriptionRepository.save(inscription);
+        return toDto(inscription);
+    }
+
+    /**
+     * Inscrire un étudiant par userId (plus pratique pour le frontend)
+     */
+    @Transactional
+    public InscriptionDto inscrireEtudiantByUserId(Long userId, Long coursId) {
+        Etudiant etudiant = etudiantRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Étudiant non trouvé pour cet utilisateur"));
 
         Cours cours = coursRepository.findById(coursId)
                 .orElseThrow(() -> new RuntimeException("Cours non trouvé"));
@@ -72,6 +104,8 @@ public class InscriptionService {
                 .id(inscription.getId())
                 .dateInscription(inscription.getDateInscription())
                 .etudiantId(inscription.getEtudiant() != null ? inscription.getEtudiant().getId() : null)
+                .etudiantUserId(inscription.getEtudiant() != null && inscription.getEtudiant().getUser() != null ?
+                        inscription.getEtudiant().getUser().getId() : null)
                 .etudiantNom(inscription.getEtudiant() != null && inscription.getEtudiant().getUser() != null ?
                         inscription.getEtudiant().getUser().getFirstName() + " " + inscription.getEtudiant().getUser().getLastName() : null)
                 .coursId(inscription.getCours() != null ? inscription.getCours().getId() : null)

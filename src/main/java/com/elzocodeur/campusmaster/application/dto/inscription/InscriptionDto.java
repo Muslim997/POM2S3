@@ -14,7 +14,8 @@ import java.time.LocalDate;
 public class InscriptionDto {
     private Long id;
     private LocalDate dateInscription;
-    private Long etudiantId;
+    private Long etudiantId;        // ID dans la table etudiants
+    private Long etudiantUserId;    // ID de l'utilisateur (table users)
     private String etudiantNom;
     private Long coursId;
     private String coursNom;

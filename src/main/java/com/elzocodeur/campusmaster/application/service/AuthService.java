@@ -36,6 +36,9 @@ public class AuthService {
             throw new RuntimeException("Nom d'utilisateur déjà utilisé");
         }
 
+        // Convertir le rôle vers les valeurs valides de l'enum
+        UserRole userRole = convertToUserRole(request.getRole());
+
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
@@ -43,16 +46,22 @@ public class AuthService {
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .phoneNumber(request.getPhoneNumber())
-                .role(UserRole.valueOf(request.getRole().toUpperCase()))
+                .role(userRole)
                 .status(UserStatus.ACTIVE)
                 .emailVerified(false)
                 .build();
 
         user = userRepository.save(user);
 
-        if ("ETUDIANT".equalsIgnoreCase(request.getRole()) && request.getNumeroEtudiant() != null) {
+        // Créer l'entité Etudiant si le rôle est STUDENT
+        if (userRole == UserRole.STUDENT) {
+            String numeroEtudiant = request.getNumeroEtudiant();
+            if (numeroEtudiant == null || numeroEtudiant.isBlank()) {
+                numeroEtudiant = "ETU" + System.currentTimeMillis();
+            }
+
             Etudiant etudiant = Etudiant.builder()
-                    .numeroEtudiant(request.getNumeroEtudiant())
+                    .numeroEtudiant(numeroEtudiant)
                     .user(user)
                     .build();
 
@@ -65,7 +74,8 @@ public class AuthService {
             etudiantRepository.save(etudiant);
         }
 
-        if ("ENSEIGNANT".equalsIgnoreCase(request.getRole())) {
+        // Créer l'entité Tuteur si le rôle est PROFESSOR
+        if (userRole == UserRole.PROFESSOR) {
             Tuteur tuteur = Tuteur.builder()
                     .specialisation(request.getSpecialisation())
                     .user(user)
@@ -146,5 +156,25 @@ public class AuthService {
                 user.getFirstName(),
                 user.getLastName()
         );
+    }
+
+    /**
+     * Convertit le rôle envoyé par le client vers les valeurs valides de l'enum UserRole.
+     * Accepte les alias français (ETUDIANT, ENSEIGNANT) et les convertit vers (STUDENT, PROFESSOR).
+     */
+    private UserRole convertToUserRole(String role) {
+        if (role == null || role.isBlank()) {
+            throw new RuntimeException("Le rôle est obligatoire");
+        }
+
+        String normalizedRole = role.toUpperCase().trim();
+
+        return switch (normalizedRole) {
+            case "STUDENT", "ETUDIANT" -> UserRole.STUDENT;
+            case "PROFESSOR", "ENSEIGNANT", "TEACHER" -> UserRole.PROFESSOR;
+            case "ADMIN", "ADMINISTRATOR" -> UserRole.ADMIN;
+            case "STAFF" -> UserRole.STAFF;
+            default -> throw new RuntimeException("Rôle invalide: " + role + ". Valeurs acceptées: STUDENT, PROFESSOR, ADMIN, STAFF");
+        };
     }
 }

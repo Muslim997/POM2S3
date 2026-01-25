@@ -48,19 +48,33 @@ public class EtudiantController {
     }
 
     @GetMapping("/mes-cours/{etudiantId}")
-    @Operation(summary = "Consulter mes cours inscrits")
+    @Operation(summary = "Consulter mes cours inscrits par etudiantId (ID table etudiants)")
     public ResponseEntity<List<InscriptionDto>> getMesCours(@PathVariable Long etudiantId) {
         return ResponseEntity.ok(inscriptionService.getInscriptionsByEtudiant(etudiantId));
+    }
+
+    @GetMapping("/mes-cours/user/{userId}")
+    @Operation(summary = "Consulter mes cours inscrits par userId (ID table users - recommandé)")
+    public ResponseEntity<List<InscriptionDto>> getMesCoursByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(inscriptionService.getInscriptionsByEtudiantUserId(userId));
     }
 
     // ============ INSCRIPTIONS ============
 
     @PostMapping("/inscription/{etudiantId}/cours/{coursId}")
-    @Operation(summary = "S'inscrire à un cours")
+    @Operation(summary = "S'inscrire à un cours par etudiantId (ID table etudiants)")
     public ResponseEntity<InscriptionDto> inscrireCours(
             @PathVariable Long etudiantId,
             @PathVariable Long coursId) {
         return ResponseEntity.ok(inscriptionService.inscrireEtudiant(etudiantId, coursId));
+    }
+
+    @PostMapping("/inscription/user/{userId}/cours/{coursId}")
+    @Operation(summary = "S'inscrire à un cours par userId (ID table users - recommandé)")
+    public ResponseEntity<InscriptionDto> inscrireCoursByUserId(
+            @PathVariable Long userId,
+            @PathVariable Long coursId) {
+        return ResponseEntity.ok(inscriptionService.inscrireEtudiantByUserId(userId, coursId));
     }
 
     @DeleteMapping("/inscription/{inscriptionId}")
@@ -115,15 +129,23 @@ public class EtudiantController {
     // ============ SOUMISSIONS ============
 
     @PostMapping("/submit/{etudiantId}")
-    @Operation(summary = "Soumettre un devoir")
+    @Operation(summary = "Soumettre un devoir par etudiantId (ID table etudiants)")
     public ResponseEntity<SubmitDto> soumettreDevoir(
             @PathVariable Long etudiantId,
             @Valid @RequestBody CreateSubmitRequest request) {
         return ResponseEntity.ok(submitService.createSubmit(request, etudiantId));
     }
 
+    @PostMapping("/submit/user/{userId}")
+    @Operation(summary = "Soumettre un devoir par userId (ID table users - recommandé)")
+    public ResponseEntity<SubmitDto> soumettreDevoi0rByUserId(
+            @PathVariable Long userId,
+            @Valid @RequestBody CreateSubmitRequest request) {
+        return ResponseEntity.ok(submitService.createSubmitByUserId(request, userId));
+    }
+
     @PutMapping("/submit/{id}/etudiant/{etudiantId}")
-    @Operation(summary = "Modifier une soumission (versionning)")
+    @Operation(summary = "Modifier une soumission par etudiantId (ID table etudiants)")
     public ResponseEntity<SubmitDto> modifierSoumission(
             @PathVariable Long id,
             @PathVariable Long etudiantId,
@@ -131,18 +153,41 @@ public class EtudiantController {
         return ResponseEntity.ok(submitService.updateSubmit(id, request, etudiantId));
     }
 
+    @PutMapping("/submit/{id}/user/{userId}")
+    @Operation(summary = "Modifier une soumission par userId (ID table users - recommandé)")
+    public ResponseEntity<SubmitDto> modifierSoumissionByUserId(
+            @PathVariable Long id,
+            @PathVariable Long userId,
+            @Valid @RequestBody CreateSubmitRequest request) {
+        return ResponseEntity.ok(submitService.updateSubmitByUserId(id, request, userId));
+    }
+
     @GetMapping("/submit/etudiant/{etudiantId}")
-    @Operation(summary = "Consulter mes soumissions")
+    @Operation(summary = "Consulter mes soumissions par etudiantId (ID table etudiants)")
     public ResponseEntity<List<SubmitDto>> getMesSoumissions(@PathVariable Long etudiantId) {
         return ResponseEntity.ok(submitService.getSubmitsByEtudiant(etudiantId));
     }
 
+    @GetMapping("/submit/user/{userId}")
+    @Operation(summary = "Consulter mes soumissions par userId (ID table users - recommandé)")
+    public ResponseEntity<List<SubmitDto>> getMesSoumissionsByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(submitService.getSubmitsByEtudiantUserId(userId));
+    }
+
     @GetMapping("/submit/devoir/{devoirId}/etudiant/{etudiantId}/historique")
-    @Operation(summary = "Consulter l'historique de soumission (versionning)")
+    @Operation(summary = "Consulter l'historique par etudiantId (ID table etudiants)")
     public ResponseEntity<List<SubmitDto>> getHistoriqueSoumission(
             @PathVariable Long devoirId,
             @PathVariable Long etudiantId) {
         return ResponseEntity.ok(submitService.getSubmitHistory(devoirId, etudiantId));
+    }
+
+    @GetMapping("/submit/devoir/{devoirId}/user/{userId}/historique")
+    @Operation(summary = "Consulter l'historique par userId (ID table users - recommandé)")
+    public ResponseEntity<List<SubmitDto>> getHistoriqueSoumissionByUserId(
+            @PathVariable Long devoirId,
+            @PathVariable Long userId) {
+        return ResponseEntity.ok(submitService.getSubmitHistoryByUserId(devoirId, userId));
     }
 
     @GetMapping("/submit/{id}")

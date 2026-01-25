@@ -50,8 +50,30 @@ public class SubmitService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Récupère les soumissions par userId de l'étudiant (plus pratique pour le frontend)
+     */
+    public List<SubmitDto> getSubmitsByEtudiantUserId(Long userId) {
+        Etudiant etudiant = etudiantRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Étudiant non trouvé pour cet utilisateur"));
+        return submitRepository.findByEtudiantId(etudiant.getId()).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
     public List<SubmitDto> getSubmitHistory(Long devoirId, Long etudiantId) {
         return submitRepository.findByDevoirIdAndEtudiantIdOrderByCreatedAtDesc(devoirId, etudiantId).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Récupère l'historique des soumissions par userId de l'étudiant (plus pratique pour le frontend)
+     */
+    public List<SubmitDto> getSubmitHistoryByUserId(Long devoirId, Long userId) {
+        Etudiant etudiant = etudiantRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Étudiant non trouvé pour cet utilisateur"));
+        return submitRepository.findByDevoirIdAndEtudiantIdOrderByCreatedAtDesc(devoirId, etudiant.getId()).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
@@ -63,6 +85,33 @@ public class SubmitService {
 
         Etudiant etudiant = etudiantRepository.findById(etudiantId)
                 .orElseThrow(() -> new RuntimeException("Étudiant non trouvé"));
+
+        // Vérifier si la deadline est passée
+        if (devoir.getDateLimite() != null && LocalDateTime.now().isAfter(devoir.getDateLimite())) {
+            throw new RuntimeException("La date limite est dépassée");
+        }
+
+        Submit submit = Submit.builder()
+                .dateSoumission(LocalDateTime.now())
+                .fichierUrl(request.getFichierUrl())
+                .devoir(devoir)
+                .etudiant(etudiant)
+                .build();
+
+        submit = submitRepository.save(submit);
+        return toDto(submit);
+    }
+
+    /**
+     * Créer une soumission par userId de l'étudiant (plus pratique pour le frontend)
+     */
+    @Transactional
+    public SubmitDto createSubmitByUserId(CreateSubmitRequest request, Long userId) {
+        Devoir devoir = devoirRepository.findById(request.getDevoirId())
+                .orElseThrow(() -> new RuntimeException("Devoir non trouvé"));
+
+        Etudiant etudiant = etudiantRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Étudiant non trouvé pour cet utilisateur"));
 
         // Vérifier si la deadline est passée
         if (devoir.getDateLimite() != null && LocalDateTime.now().isAfter(devoir.getDateLimite())) {
@@ -126,6 +175,35 @@ public class SubmitService {
         submitRepository.delete(submit);
     }
 
+    /**
+     * Modifier une soumission par userId de l'étudiant (plus pratique pour le frontend)
+     */
+    @Transactional
+    public SubmitDto updateSubmitByUserId(Long id, CreateSubmitRequest request, Long userId) {
+        Submit submit = submitRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Soumission non trouvée"));
+
+        Etudiant etudiant = etudiantRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Étudiant non trouvé pour cet utilisateur"));
+
+        // Vérifier que c'est bien l'étudiant propriétaire
+        if (!submit.getEtudiant().getId().equals(etudiant.getId())) {
+            throw new RuntimeException("Non autorisé à modifier cette soumission");
+        }
+
+        // Vérifier si la deadline est passée
+        if (submit.getDevoir().getDateLimite() != null &&
+            LocalDateTime.now().isAfter(submit.getDevoir().getDateLimite())) {
+            throw new RuntimeException("La date limite est dépassée");
+        }
+
+        submit.setFichierUrl(request.getFichierUrl());
+        submit.setDateSoumission(LocalDateTime.now());
+
+        submit = submitRepository.save(submit);
+        return toDto(submit);
+    }
+
     private SubmitDto toDto(Submit submit) {
         return SubmitDto.builder()
                 .id(submit.getId())
@@ -136,6 +214,8 @@ public class SubmitService {
                 .devoirId(submit.getDevoir() != null ? submit.getDevoir().getId() : null)
                 .devoirTitre(submit.getDevoir() != null ? submit.getDevoir().getTitre() : null)
                 .etudiantId(submit.getEtudiant() != null ? submit.getEtudiant().getId() : null)
+                .etudiantUserId(submit.getEtudiant() != null && submit.getEtudiant().getUser() != null ?
+                        submit.getEtudiant().getUser().getId() : null)
                 .etudiantNom(submit.getEtudiant() != null && submit.getEtudiant().getUser() != null ?
                         submit.getEtudiant().getUser().getFirstName() + " " + submit.getEtudiant().getUser().getLastName() : null)
                 .createdAt(submit.getCreatedAt())

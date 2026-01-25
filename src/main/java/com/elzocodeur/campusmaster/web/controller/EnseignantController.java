@@ -54,9 +54,15 @@ public class EnseignantController {
     }
 
     @GetMapping("/cours/tuteur/{tuteurId}")
-    @Operation(summary = "Consulter mes cours en tant que tuteur")
+    @Operation(summary = "Consulter mes cours par tuteurId (ID table tuteurs)")
     public ResponseEntity<List<CoursDto>> getMesCours(@PathVariable Long tuteurId) {
         return ResponseEntity.ok(coursService.getCoursByTuteur(tuteurId));
+    }
+
+    @GetMapping("/cours/user/{userId}")
+    @Operation(summary = "Consulter mes cours par userId (ID table users - recommandé)")
+    public ResponseEntity<List<CoursDto>> getMesCoursByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(coursService.getCoursByTuteurUserId(userId));
     }
 
     @PostMapping("/cours")
@@ -138,6 +144,18 @@ public class EnseignantController {
         return ResponseEntity.ok(devoirService.getDevoirsByCours(coursId));
     }
 
+    @GetMapping("/devoirs/tuteur/{tuteurId}")
+    @Operation(summary = "Consulter tous mes devoirs par tuteurId (ID table tuteurs)")
+    public ResponseEntity<List<DevoirDto>> getMesDevoirs(@PathVariable Long tuteurId) {
+        return ResponseEntity.ok(devoirService.getDevoirsByTuteur(tuteurId));
+    }
+
+    @GetMapping("/devoirs/user/{userId}")
+    @Operation(summary = "Consulter tous mes devoirs par userId (ID table users - recommandé)")
+    public ResponseEntity<List<DevoirDto>> getMesDevoirsByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(devoirService.getDevoirsByTuteurUserId(userId));
+    }
+
     // ============ ÉVALUATION DES SOUMISSIONS ============
 
     @GetMapping("/devoirs/{devoirId}/submissions")
@@ -185,9 +203,15 @@ public class EnseignantController {
     }
 
     @GetMapping("/annonces/tuteur/{tuteurId}")
-    @Operation(summary = "Consulter mes annonces")
+    @Operation(summary = "Consulter mes annonces par tuteurId (ID table tuteurs)")
     public ResponseEntity<List<AnnonceDto>> getMesAnnonces(@PathVariable Long tuteurId) {
         return ResponseEntity.ok(annonceService.getAnnoncesByTuteur(tuteurId));
+    }
+
+    @GetMapping("/annonces/user/{userId}")
+    @Operation(summary = "Consulter mes annonces par userId (ID table users - recommandé)")
+    public ResponseEntity<List<AnnonceDto>> getMesAnnoncesByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(annonceService.getAnnoncesByTuteurUserId(userId));
     }
 
     @GetMapping("/cours/{coursId}/annonces")
@@ -205,9 +229,15 @@ public class EnseignantController {
     }
 
     @GetMapping("/etudiants/{id}/progress")
-    @Operation(summary = "Consulter le progrès d'un étudiant")
+    @Operation(summary = "Consulter le progrès d'un étudiant par etudiantId (ID table etudiants)")
     public ResponseEntity<EtudiantProgressDto> getEtudiantProgress(@PathVariable Long id) {
         return ResponseEntity.ok(etudiantService.getEtudiantProgress(id));
+    }
+
+    @GetMapping("/etudiants/user/{userId}/progress")
+    @Operation(summary = "Consulter le progrès d'un étudiant par userId (ID table users - recommandé)")
+    public ResponseEntity<EtudiantProgressDto> getEtudiantProgressByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(etudiantService.getEtudiantProgressByUserId(userId));
     }
 
     // ============ STATISTIQUES ============
@@ -219,8 +249,14 @@ public class EnseignantController {
     }
 
     @GetMapping("/tuteur/{tuteurId}/stats")
-    @Operation(summary = "Statistiques de tous mes cours")
+    @Operation(summary = "Statistiques de tous mes cours par tuteurId (ID table tuteurs)")
     public ResponseEntity<List<CoursStatsDto>> getMesCoursStats(@PathVariable Long tuteurId) {
         return ResponseEntity.ok(statsService.getCoursStatsByTuteur(tuteurId));
+    }
+
+    @GetMapping("/user/{userId}/stats")
+    @Operation(summary = "Statistiques de tous mes cours par userId (ID table users - recommandé)")
+    public ResponseEntity<List<CoursStatsDto>> getMesCoursStatsByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(statsService.getCoursStatsByTuteurUserId(userId));
     }
 }

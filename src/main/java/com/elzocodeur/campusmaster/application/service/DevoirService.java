@@ -4,9 +4,11 @@ import com.elzocodeur.campusmaster.application.dto.devoir.CreateDevoirRequest;
 import com.elzocodeur.campusmaster.application.dto.devoir.DevoirDto;
 import com.elzocodeur.campusmaster.domain.entity.Cours;
 import com.elzocodeur.campusmaster.domain.entity.Devoir;
+import com.elzocodeur.campusmaster.domain.entity.Tuteur;
 import com.elzocodeur.campusmaster.infrastructure.persistence.repository.CoursRepository;
 import com.elzocodeur.campusmaster.infrastructure.persistence.repository.DevoirRepository;
 import com.elzocodeur.campusmaster.infrastructure.persistence.repository.SubmitRepository;
+import com.elzocodeur.campusmaster.infrastructure.persistence.repository.TuteurRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,7 @@ public class DevoirService {
     private final DevoirRepository devoirRepository;
     private final CoursRepository coursRepository;
     private final SubmitRepository submitRepository;
+    private final TuteurRepository tuteurRepository;
     private final NotificationService notificationService;
 
     public List<DevoirDto> getAllDevoirs() {
@@ -53,6 +56,30 @@ public class DevoirService {
         return devoirRepository.findByDateLimiteBetween(start, end).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Récupère tous les devoirs d'un tuteur (via ses cours) par tuteurId (ID table tuteurs)
+     */
+    public List<DevoirDto> getDevoirsByTuteur(Long tuteurId) {
+        // Récupérer tous les cours du tuteur
+        List<Cours> cours = coursRepository.findByTuteurId(tuteurId);
+
+        // Récupérer tous les devoirs de ces cours
+        return cours.stream()
+                .flatMap(c -> devoirRepository.findByCoursId(c.getId()).stream())
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Récupère tous les devoirs d'un tuteur (via ses cours) par userId (ID table users - recommandé)
+     */
+    public List<DevoirDto> getDevoirsByTuteurUserId(Long userId) {
+        Tuteur tuteur = tuteurRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Tuteur non trouvé pour cet utilisateur"));
+
+        return getDevoirsByTuteur(tuteur.getId());
     }
 
     @Transactional
@@ -102,13 +129,21 @@ public class DevoirService {
     }
 
     private DevoirDto toDto(Devoir devoir) {
+        Cours cours = devoir.getCours();
+        Tuteur tuteur = cours != null ? cours.getTuteur() : null;
+
         return DevoirDto.builder()
                 .id(devoir.getId())
                 .titre(devoir.getTitre())
                 .description(devoir.getDescription())
                 .dateLimite(devoir.getDateLimite())
-                .coursId(devoir.getCours() != null ? devoir.getCours().getId() : null)
-                .coursNom(devoir.getCours() != null ? devoir.getCours().getTitre() : null)
+                .coursId(cours != null ? cours.getId() : null)
+                .coursNom(cours != null ? cours.getTitre() : null)
+                .coursSemestre(cours != null ? cours.getSemestre() : null)
+                .tuteurId(tuteur != null ? tuteur.getId() : null)
+                .tuteurUserId(tuteur != null && tuteur.getUser() != null ? tuteur.getUser().getId() : null)
+                .tuteurNom(tuteur != null && tuteur.getUser() != null ?
+                        tuteur.getUser().getFirstName() + " " + tuteur.getUser().getLastName() : null)
                 .nombreSubmissions(devoir.getSubmits() != null ? devoir.getSubmits().size() : 0)
                 .createdAt(devoir.getCreatedAt())
                 .build();
