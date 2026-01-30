@@ -38,11 +38,12 @@ export default function Home() {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center mb-16">
             <h1 className="text-5xl font-bold text-gray-900 mb-6">
-              Plateforme pédagogique avancée
-              <span className="block text-blue-600 mt-2">pour étudiants de Master 2</span>
+              CampusMaster Sénégal
+              <span className="block text-blue-600 mt-2">Plateforme universitaire digitale</span>
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              Gérez vos cours, suivez vos devoirs et communiquez avec vos enseignants sur une plateforme moderne et intuitive.
+              La première plateforme pédagogique digitale du Sénégal. Connectez-vous avec vos enseignants, 
+              suivez vos cours et gérez vos projets académiques à l'Université Cheikh Anta Diop de Dakar.
             </p>
             <div className="flex justify-center space-x-4">
               <Link href="/register">
@@ -66,7 +67,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Gestion des cours</h3>
               <p className="text-gray-600">
-                Accédez à tous vos cours, supports pédagogiques et ressources en un seul endroit.
+                Accédez aux programmes des Masters 2 en Informatique, Mathématiques et Physique de l'UCAD.
               </p>
             </div>
 
@@ -108,7 +109,7 @@ export default function Home() {
               Prêt à commencer ?
             </h2>
             <p className="text-blue-100 text-lg mb-8">
-              Rejoignez CampusMaster et transformez votre expérience d'apprentissage.
+              Rejoignez la communauté CampusMaster UCAD et révolutionnez votre apprentissage universitaire.
             </p>
             <Link href="/register">
               <button className="px-8 py-3 bg-white text-blue-600 rounded-lg hover:bg-gray-100 font-medium text-lg transition-colors">
@@ -122,7 +123,7 @@ export default function Home() {
       <footer className="bg-gray-900 text-white py-8 mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-gray-400">
-            © 2025 CampusMaster. Plateforme pédagogique pour Master 2.
+            © 2025 CampusMaster UCAD. Université Cheikh Anta Diop de Dakar - Sénégal.
           </p>
         </div>
       </footer>

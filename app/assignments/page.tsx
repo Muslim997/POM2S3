@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/Card';
 import { useAuthStore } from '@/lib/store';
-import { supabase } from '@/lib/supabase';
 import { FileText, Calendar, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import Button from '@/components/Button';
@@ -20,6 +19,36 @@ export default function AssignmentsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'submitted' | 'graded'>('all');
 
+  const loadAssignments = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch('/api/assignments', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAssignments(data.assignments || []);
+        setSubmissions(data.submissions || []);
+      } else {
+        console.error('Erreur lors de la récupération des assignments');
+      }
+    } catch (error) {
+      console.error('Error loading assignments:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, router]);
+
   useEffect(() => {
     if (!user) {
       router.push('/login');
@@ -27,48 +56,7 @@ export default function AssignmentsPage() {
     }
 
     loadAssignments();
-  }, [user, router]);
-
-  const loadAssignments = async () => {
-    if (!user) return;
-
-    try {
-      if (user.role === 'student') {
-        const { data: enrollments } = await supabase
-          .from('enrollments')
-          .select('subject_id')
-          .eq('student_id', user.id);
-
-        const subjectIds = enrollments?.map(e => e.subject_id) || [];
-
-        const { data: assignmentsData } = await supabase
-          .from('assignments')
-          .select('*, subjects(title, code)')
-          .in('subject_id', subjectIds)
-          .order('due_date', { ascending: true });
-
-        const { data: submissionsData } = await supabase
-          .from('submissions')
-          .select('*, grades(*)')
-          .eq('student_id', user.id);
-
-        setAssignments(assignmentsData || []);
-        setSubmissions(submissionsData || []);
-      } else if (user.role === 'teacher') {
-        const { data: assignmentsData } = await supabase
-          .from('assignments')
-          .select('*, subjects(title, code)')
-          .eq('created_by', user.id)
-          .order('due_date', { ascending: true });
-
-        setAssignments(assignmentsData || []);
-      }
-    } catch (error) {
-      console.error('Error loading assignments:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, router, loadAssignments]);
 
   const getAssignmentStatus = (assignment: any) => {
     if (user?.role !== 'student') return null;

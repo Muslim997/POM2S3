@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/Card';
 import { useAuthStore } from '@/lib/store';
-import { supabase, Subject } from '@/lib/supabase';
 import { BookOpen, Users, Clock, Plus } from 'lucide-react';
 import Link from 'next/link';
 import Button from '@/components/Button';
@@ -16,6 +15,35 @@ export default function CoursesPage() {
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const loadCourses = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch('/api/courses', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const coursesData = await response.json();
+        setCourses(coursesData);
+      } else {
+        console.error('Erreur lors de la récupération des cours');
+      }
+    } catch (error) {
+      console.error('Error loading courses:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, router]);
+
   useEffect(() => {
     if (!user) {
       router.push('/login');
@@ -23,42 +51,7 @@ export default function CoursesPage() {
     }
 
     loadCourses();
-  }, [user, router]);
-
-  const loadCourses = async () => {
-    if (!user) return;
-
-    try {
-      if (user.role === 'student') {
-        const { data, error } = await supabase
-          .from('enrollments')
-          .select('*, subjects(*, profiles(full_name))')
-          .eq('student_id', user.id);
-
-        if (error) throw error;
-        setCourses(data?.map(e => e.subjects) || []);
-      } else if (user.role === 'teacher') {
-        const { data, error } = await supabase
-          .from('subjects')
-          .select('*, profiles(full_name)')
-          .eq('teacher_id', user.id);
-
-        if (error) throw error;
-        setCourses(data || []);
-      } else if (user.role === 'admin') {
-        const { data, error } = await supabase
-          .from('subjects')
-          .select('*, profiles(full_name)');
-
-        if (error) throw error;
-        setCourses(data || []);
-      }
-    } catch (error) {
-      console.error('Error loading courses:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, router, loadCourses]);
 
   if (!user) return null;
 

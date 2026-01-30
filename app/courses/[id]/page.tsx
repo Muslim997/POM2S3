@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/Card';
@@ -23,16 +23,7 @@ export default function CourseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('materials');
 
-  useEffect(() => {
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-
-    loadCourseData();
-  }, [user, router, params.id]);
-
-  const loadCourseData = async () => {
+  const loadCourseData = useCallback(async () => {
     if (!user || !params.id) return;
 
     try {
@@ -73,7 +64,16 @@ export default function CourseDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, params.id]);
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    loadCourseData();
+  }, [user, router, params.id, loadCourseData]);
 
   if (!user || loading) {
     return (

@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/Card';
 import { useAuthStore } from '@/lib/store';
-import { supabase } from '@/lib/supabase';
 import { BookOpen, FileText, MessageSquare, Calendar, TrendingUp, Users, Award } from 'lucide-react';
 import Link from 'next/link';
 
@@ -16,6 +15,35 @@ export default function DashboardPage() {
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const loadDashboardData = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch('/api/dashboard/stats', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const statsData = await response.json();
+        setStats(statsData);
+      } else {
+        console.error('Erreur lors de la récupération des statistiques');
+      }
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, router]);
+
   useEffect(() => {
     if (!user) {
       router.push('/login');
@@ -23,90 +51,7 @@ export default function DashboardPage() {
     }
 
     loadDashboardData();
-  }, [user, router]);
-
-  const loadDashboardData = async () => {
-    if (!user) return;
-
-    try {
-      if (user.role === 'student') {
-        const { data: enrollments } = await supabase
-          .from('enrollments')
-          .select('*, subjects(*)')
-          .eq('student_id', user.id);
-
-        const { data: submissions } = await supabase
-          .from('submissions')
-          .select('*, assignments(*)')
-          .eq('student_id', user.id);
-
-        const { data: notifications } = await supabase
-          .from('notifications')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('is_read', false);
-
-        setStats({
-          courses: enrollments?.length || 0,
-          assignments: submissions?.filter(s => s.status === 'draft').length || 0,
-          notifications: notifications?.length || 0,
-          grade: '15.5/20',
-        });
-      } else if (user.role === 'teacher') {
-        const { data: subjects } = await supabase
-          .from('subjects')
-          .select('*')
-          .eq('teacher_id', user.id);
-
-        const { data: assignments } = await supabase
-          .from('assignments')
-          .select('*')
-          .eq('created_by', user.id);
-
-        const { data: submissions } = await supabase
-          .from('submissions')
-          .select('*, assignments!inner(*)')
-          .eq('assignments.created_by', user.id)
-          .eq('status', 'submitted');
-
-        setStats({
-          courses: subjects?.length || 0,
-          assignments: assignments?.length || 0,
-          pendingGrading: submissions?.length || 0,
-          students: 0,
-        });
-      } else if (user.role === 'admin') {
-        const { count: usersCount } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
-
-        const { count: coursesCount } = await supabase
-          .from('subjects')
-          .select('*', { count: 'exact', head: true });
-
-        const { count: studentsCount } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true })
-          .eq('role', 'student');
-
-        const { count: teachersCount } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true })
-          .eq('role', 'teacher');
-
-        setStats({
-          users: usersCount || 0,
-          courses: coursesCount || 0,
-          students: studentsCount || 0,
-          teachers: teachersCount || 0,
-        });
-      }
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, router, loadDashboardData]);
 
   if (!user) return null;
 

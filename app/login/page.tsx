@@ -22,27 +22,24 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (authError) throw authError;
+      const data = await response.json();
 
-      if (authData.user) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', authData.user.id)
-          .maybeSingle();
-
-        if (profileError) throw profileError;
-
-        if (profile) {
-          setUser(profile);
-          router.push('/dashboard');
-        }
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur de connexion');
       }
+
+      // Stocker le token et l'utilisateur
+      localStorage.setItem('token', data.token);
+      setUser(data.user);
+      router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue lors de la connexion');
     } finally {

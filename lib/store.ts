@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import { Profile } from './supabase';
+import { User } from './types';
 
 interface AuthState {
-  user: Profile | null;
-  setUser: (user: Profile | null) => void;
+  user: User | null;
+  setUser: (user: User | null) => void;
   logout: () => void;
 }
 
