@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Vérifier le mot de passe
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    const isValidPassword = await bcrypt.compare(password, (user as any).password_hash);
     console.log('Mot de passe valide:', isValidPassword);
 
     if (!isValidPassword) {
@@ -42,13 +42,13 @@ export async function POST(request: NextRequest) {
 
     // Créer le token JWT
     const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
+      { userId: (user as any).id, email: (user as any).email, role: (user as any).role },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
 
     // Retourner l'utilisateur sans le mot de passe
-    const { password_hash, ...userWithoutPassword } = user;
+    const { password_hash, ...userWithoutPassword } = user as any;
 
     return NextResponse.json({ user: userWithoutPassword, token }, { status: 200 });
   } catch (error) {

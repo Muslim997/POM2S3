@@ -90,7 +90,7 @@ export default function UsersPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestion des utilisateurs</h1>
             <p className="text-gray-600">Gérez tous les utilisateurs de la plateforme</p>
           </div>
-          <Button>
+          <Button onClick={() => alert('Fonctionnalité à implémenter : Ajouter un utilisateur')}>
             <UserPlus size={18} className="mr-2" />
             Ajouter un utilisateur
           </Button>

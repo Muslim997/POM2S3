@@ -162,7 +162,7 @@ export default function CourseDetailPage() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-gray-900">Supports de cours</h2>
               {canEdit && (
-                <Button size="sm">
+                <Button size="sm" onClick={() => alert('Fonctionnalité à implémenter : Ajouter un fichier')}>
                   <Upload size={16} className="mr-2" />
                   Ajouter un fichier
                 </Button>
@@ -190,7 +190,7 @@ export default function CourseDetailPage() {
                           </p>
                         </div>
                       </div>
-                      <Button size="sm" variant="secondary">
+                      <Button size="sm" variant="secondary" onClick={() => alert('Fonctionnalité à implémenter : Télécharger le fichier')}>
                         <Download size={16} className="mr-2" />
                         Télécharger
                       </Button>
@@ -260,7 +260,7 @@ export default function CourseDetailPage() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-gray-900">Annonces</h2>
               {canEdit && (
-                <Button size="sm">
+                <Button size="sm" onClick={() => alert('Fonctionnalité à implémenter : Publier une annonce')}>
                   <Plus size={16} className="mr-2" />
                   Publier une annonce
                 </Button>
@@ -299,12 +299,23 @@ export default function CourseDetailPage() {
         )}
 
         {activeTab === 'forum' && (
-          <Card>
-            <CardContent className="text-center py-12">
-              <MessageSquare size={48} className="mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-600">Forum de discussion à venir</p>
-            </CardContent>
-          </Card>
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">Forum de discussion</h2>
+              <Button size="sm" onClick={() => alert('Fonctionnalité à implémenter : Nouveau sujet')}>
+                <Plus size={16} className="mr-2" />
+                Nouveau sujet
+              </Button>
+            </div>
+
+            <Card>
+              <CardContent className="text-center py-12">
+                <MessageSquare size={48} className="mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-600 mb-4">Aucun sujet de discussion pour le moment</p>
+                <p className="text-sm text-gray-500">Soyez le premier à poser une question ou à partager vos idées !</p>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
     </Layout>

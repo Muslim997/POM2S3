@@ -14,8 +14,8 @@ export async function GET(request: NextRequest) {
     const userId = decoded.id;
     const userRole = decoded.role;
 
-    let assignments = [];
-    let submissions = [];
+    let assignments: any[] = [];
+    let submissions: any[] = [];
 
     if (userRole === 'student') {
       // Récupérer les assignments pour les cours où l'étudiant est inscrit

@@ -253,7 +253,7 @@ export default function MessagesPage() {
                 </div>
                 {selectedMessage.is_received && (
                   <div className="mt-6 pt-6 border-t border-gray-200">
-                    <Button variant="secondary">
+                    <Button variant="secondary" onClick={() => setShowCompose(true)}>
                       Répondre
                     </Button>
                   </div>

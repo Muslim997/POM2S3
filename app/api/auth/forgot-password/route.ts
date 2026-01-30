@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}`;
 
     // Configuration du transporteur email (à configurer avec un vrai service)
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: 587,
       secure: false,
