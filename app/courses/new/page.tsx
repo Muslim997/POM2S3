@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/Card';
@@ -9,7 +9,7 @@ import Input from '@/components/Input';
 import Button from '@/components/Button';
 import { Textarea } from '@/components/Input';
 
-export default function NewCoursePage() {
+function NewCoursePageContent() {
   const router = useRouter();
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
@@ -123,5 +123,19 @@ export default function NewCoursePage() {
         </Card>
       </div>
     </Layout>
+  );
+}
+
+export default function NewCoursePage() {
+  return (
+    <Suspense fallback={
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </Layout>
+    }>
+      <NewCoursePageContent />
+    </Suspense>
   );
 }

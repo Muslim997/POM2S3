@@ -3,6 +3,8 @@ import { pool } from '@/lib/db';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();

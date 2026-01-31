@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/Card';
@@ -9,7 +9,7 @@ import Input from '@/components/Input';
 import Button from '@/components/Button';
 import { Textarea } from '@/components/Input';
 
-export default function NewAssignmentPage() {
+function NewAssignmentPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
@@ -162,5 +162,19 @@ export default function NewAssignmentPage() {
         </Card>
       </div>
     </Layout>
+  );
+}
+
+export default function NewAssignmentPage() {
+  return (
+    <Suspense fallback={
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </Layout>
+    }>
+      <NewAssignmentPageContent />
+    </Suspense>
   );
 }
