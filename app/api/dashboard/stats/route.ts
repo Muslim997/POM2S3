@@ -19,17 +19,17 @@ export async function GET(request: NextRequest) {
       const [enrollmentsResult] = await pool.execute(
         'SELECT COUNT(*) as count FROM enrollments WHERE student_id = ?',
         [userId]
-      );
+      ) as any[];
 
       const [submissionsResult] = await pool.execute(
         'SELECT COUNT(*) as count FROM submissions WHERE student_id = ? AND status = "draft"',
         [userId]
-      );
+      ) as any[];
 
       const [notificationsResult] = await pool.execute(
         'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = false',
         [userId]
-      );
+      ) as any[];
 
       return NextResponse.json({
         courses: enrollmentsResult[0].count,
@@ -42,17 +42,17 @@ export async function GET(request: NextRequest) {
       const [subjectsResult] = await pool.execute(
         'SELECT COUNT(*) as count FROM subjects WHERE teacher_id = ?',
         [userId]
-      );
+      ) as any[];
 
       const [assignmentsResult] = await pool.execute(
         'SELECT COUNT(*) as count FROM assignments WHERE teacher_id = ?',
         [userId]
-      );
+      ) as any[];
 
       const [submissionsResult] = await pool.execute(
         'SELECT COUNT(*) as count FROM submissions s JOIN assignments a ON s.assignment_id = a.id WHERE a.teacher_id = ? AND s.status = "submitted"',
         [userId]
-      );
+      ) as any[];
 
       return NextResponse.json({
         courses: subjectsResult[0].count,
@@ -62,10 +62,10 @@ export async function GET(request: NextRequest) {
       });
     } else if (userRole === 'admin') {
       // Statistiques pour admin
-      const [usersResult] = await pool.execute('SELECT COUNT(*) as count FROM users');
-      const [coursesResult] = await pool.execute('SELECT COUNT(*) as count FROM subjects');
-      const [studentsResult] = await pool.execute('SELECT COUNT(*) as count FROM users WHERE role = "student"');
-      const [teachersResult] = await pool.execute('SELECT COUNT(*) as count FROM users WHERE role = "teacher"');
+      const [usersResult] = await pool.execute('SELECT COUNT(*) as count FROM users') as any[];
+      const [coursesResult] = await pool.execute('SELECT COUNT(*) as count FROM subjects') as any[];
+      const [studentsResult] = await pool.execute('SELECT COUNT(*) as count FROM users WHERE role = "student"') as any[];
+      const [teachersResult] = await pool.execute('SELECT COUNT(*) as count FROM users WHERE role = "teacher"') as any[];
 
       return NextResponse.json({
         users: usersResult[0].count,

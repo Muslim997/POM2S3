@@ -294,7 +294,7 @@ export const supabase = {
     select: (columns?: string) => ({
       eq: (column: string, value: any) => ({
         single: async () => {
-          let data = null;
+          let data: any | null = null;
           let error = null;
 
           switch (table) {
@@ -344,7 +344,7 @@ export const supabase = {
         order: (column: string, options?: any) => ({
           limit: (count: number) => ({
             single: async () => {
-              let data = null;
+              let data: any[] | null = null;
               let error = null;
 
               switch (table) {
@@ -370,7 +370,7 @@ export const supabase = {
         })
       }),
       single: async () => {
-        let data = null;
+        let data: any | null = null;
         let error = null;
 
         switch (table) {

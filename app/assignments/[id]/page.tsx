@@ -18,15 +18,6 @@ export default function AssignmentDetailPage() {
   const [submission, setSubmission] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-
-    loadAssignment();
-  }, [user, params.id, router, loadAssignment]);
-
   const loadAssignment = useCallback(async () => {
     if (!params.id) return;
 
@@ -51,6 +42,15 @@ export default function AssignmentDetailPage() {
       setLoading(false);
     }
   }, [params.id]);
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    loadAssignment();
+  }, [user, params.id, router, loadAssignment]);
 
   if (!user || loading) {
     return (

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const userId = decoded.id;
     const userRole = decoded.role;
 
-    let courses = [];
+    let courses: any[] = [];
 
     if (userRole === 'student') {
       const [rows] = await pool.execute(`
